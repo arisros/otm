@@ -2,39 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OTM - One Time Message</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   </head>
-  <body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-xl">
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white w-full max-w-md p-6 rounded-2xl shadow-md">
       <h1 class="text-2xl font-bold mb-4 text-center">🔐 One Time Message</h1>
       <form id="msgForm" class="space-y-4">
         <textarea
           name="message"
           placeholder="Enter your secret..."
           required
-          class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+          class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-300 resize-none min-h-[100px]"
         ></textarea>
-        <div class="flex items-center space-x-2">
+
+        <div class="flex items-center gap-2 text-sm">
           <input type="checkbox" name="read_once" id="read_once" checked />
-          <label for="read_once" class="text-sm">Read once only</label>
+          <label for="read_once">Read once only</label>
         </div>
-        <div>
-          <label class="text-sm">Expires in (seconds):</label>
+
+        <div class="flex items-center justify-between text-sm">
+          <label for="expires_in">Expires in (seconds):</label>
           <input
             type="number"
             name="expires_in"
+            id="expires_in"
             value="600"
-            class="ml-2 w-24 p-1 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+            class="w-24 p-1 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300 text-right"
           />
         </div>
+
         <button
           type="submit"
-          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          class="w-full bg-blue-600 text-white py-2 rounded-lg text-base font-medium transition transform hover:scale-105 active:scale-95"
         >
           Create Message
         </button>
       </form>
+
       <div
         id="result"
         class="mt-4 text-sm text-center text-green-600 font-medium space-y-2"
@@ -66,9 +87,12 @@
             const data = await res.json();
             const link = `${window.location.origin}/msg/${data.id}`;
             resultEl.innerHTML = `
-          ✅ Message link created:<br>
-          <a href="${link}" class="text-blue-500 underline" target="_blank">${link}</a><br>
-          <button onclick="navigator.clipboard.writeText('${link}');this.textContent='✅ Copied!';" class="mt-2 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">📋 Copy Link</button>
+          <div class="fade-in">
+            ✅ Message link created:<br />
+            <a href="${link}" class="text-blue-500 underline break-all" target="_blank">${link}</a><br />
+            <button onclick="navigator.clipboard.writeText('${link}');this.textContent='✅ Copied!';"
+              class="mt-2 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm transition hover:scale-105 active:scale-95">📋 Copy Link</button>
+          </div>
         `;
           } else {
             resultEl.textContent = "❌ Failed to create message";
