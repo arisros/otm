@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Read Message</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div
+      class="bg-white p-6 rounded-xl shadow-md w-full max-w-xl space-y-4 text-center"
+    >
+      <h1 class="text-2xl font-bold mb-2">📨 Decrypted Message</h1>
+      <div id="spinner" class="flex justify-center">
+        <div
+          class="animate-spin rounded-full h-6 w-6 border-2 border-b-transparent border-gray-600"
+        ></div>
+      </div>
+      <pre
+        id="output"
+        class="hidden p-4 bg-gray-100 rounded text-gray-800 text-sm whitespace-pre-wrap"
+      ></pre>
+      <button
+        onclick="window.location.href='/'"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition transform hover:scale-105 active:scale-95"
+      >
+        Create New Message
+      </button>
+    </div>
+
+    <script>
+      async function fetchMessage() {
+        const pathParts = window.location.pathname.split("/");
+        const id = pathParts[pathParts.length - 1];
+        const res = await fetch(`/api/msg/${id}`);
+        const output = document.getElementById("output");
+        const spinner = document.getElementById("spinner");
+
+        spinner.style.display = "none";
+        output.classList.remove("hidden");
+
+        if (!res.ok) {
+          output.textContent = "❌ Failed to load message or it has expired.";
+          output.classList.add("text-red-500");
+          return;
+        }
+
+        const data = await res.json();
+        output.textContent = data.message;
+      }
+
+      fetchMessage();
+    </script>
+  </body>
+</html>

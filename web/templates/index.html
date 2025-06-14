@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OTM - One Time Message</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-xl">
+      <h1 class="text-2xl font-bold mb-4 text-center">🔐 One Time Message</h1>
+      <form id="msgForm" class="space-y-4">
+        <textarea
+          name="message"
+          placeholder="Enter your secret..."
+          required
+          class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+        ></textarea>
+        <div class="flex items-center space-x-2">
+          <input type="checkbox" name="read_once" id="read_once" checked />
+          <label for="read_once" class="text-sm">Read once only</label>
+        </div>
+        <div>
+          <label class="text-sm">Expires in (seconds):</label>
+          <input
+            type="number"
+            name="expires_in"
+            value="600"
+            class="ml-2 w-24 p-1 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+          />
+        </div>
+        <button
+          type="submit"
+          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+        >
+          Create Message
+        </button>
+      </form>
+      <div
+        id="result"
+        class="mt-4 text-sm text-center text-green-600 font-medium space-y-2"
+      ></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("msgForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const payload = {
+            message: form.message.value,
+            read_once: form.read_once.checked,
+            expires_in: parseInt(form.expires_in.value),
+          };
+
+          const res = await fetch("/api/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const resultEl = document.getElementById("result");
+          resultEl.innerHTML = "";
+
+          if (res.ok) {
+            const data = await res.json();
+            const link = `${window.location.origin}/msg/${data.id}`;
+            resultEl.innerHTML = `
+          ✅ Message link created:<br>
+          <a href="${link}" class="text-blue-500 underline" target="_blank">${link}</a><br>
+          <button onclick="navigator.clipboard.writeText('${link}');this.textContent='✅ Copied!';" class="mt-2 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">📋 Copy Link</button>
+        `;
+          } else {
+            resultEl.textContent = "❌ Failed to create message";
+          }
+        });
+    </script>
+  </body>
+</html>

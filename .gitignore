@@ -1,0 +1,43 @@
+
+# Go build artifacts
+/bin/
+/build/
+/dist/
+*.exe
+*.test
+*.out
+
+# OS and editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependency directories (if using Go modules vendoring)
+vendor/
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment and config
+.env
+.env.*
+
+# HTTP client request/response
+*.http
+
+# Logs and runtime files
+*.log
+/tmp/
+.cache/
+
+# Web build artifacts (if any)
+node_modules/
+web/static/
+
+# Secret keys (if exported)
+secret.key
