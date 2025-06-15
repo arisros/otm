@@ -37,7 +37,6 @@ vendor/
 
 # Web build artifacts (if any)
 node_modules/
-web/static/
 
 # Secret keys (if exported)
 secret.key
