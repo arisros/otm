@@ -3,7 +3,7 @@
 set -euo pipefail
 
 PORT=8080
-ENV_FILE="config/.env"
+ENV_FILE=".env"
 LOG_FILE="otm.log"
 BINARY="./otm-server"
 SOURCE_DIR="./cmd/otm"
