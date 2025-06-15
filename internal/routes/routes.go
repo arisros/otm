@@ -21,6 +21,9 @@ func RegisterRoutes(r chi.Router, db *storage.DBHandle) {
 	// rest api
 	r.Post("/api/messages", handleCreateMessage(db))
 	r.Get("/api/msg/{id}", handleReadMessage(db))
+
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
+
 }
 
 func serveTemplate(name string) http.HandlerFunc {

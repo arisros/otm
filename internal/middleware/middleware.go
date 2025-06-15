@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -10,34 +11,47 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var visitors = make(map[string]*rate.Limiter)
-var rateLimit = rate.Every(1 * time.Second)
-var burstLimit = 3
+var (
+	visitors     = map[string]*rate.Limiter{}
+	cooldowns    = map[string]time.Time{}
+	rateLimit    = rate.Every(1 * time.Second)
+	burstLimit   = 3
+	cooldownTime = 30 * time.Second
+)
 
-// getVisitorLimiter returns a rate limiter for an IP address
-func getVisitorLimiter(ip string) *rate.Limiter {
-	limiter, exists := visitors[ip]
-	if !exists {
-		limiter = rate.NewLimiter(rateLimit, burstLimit)
-		visitors[ip] = limiter
+func limiterFor(ip string) *rate.Limiter {
+	if l, ok := visitors[ip]; ok {
+		return l
 	}
-	return limiter
+	lim := rate.NewLimiter(rateLimit, burstLimit)
+	visitors[ip] = lim
+	return lim
 }
 
-// RateLimitMiddleware applies rate limiting per IP
 func RateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := GetIP(r)
-		limiter := getVisitorLimiter(ip)
-		if !limiter.Allow() {
-			http.Error(w, "Too many requests", http.StatusTooManyRequests)
+
+		if until, blocked := cooldowns[ip]; blocked {
+			if time.Now().Before(until) {
+				time.Sleep(until.Sub(time.Now()))
+				http.Error(w, "Too many requests 🙂", http.StatusTooManyRequests)
+				return
+			}
+			delete(cooldowns, ip)
+		}
+
+		if !limiterFor(ip).Allow() {
+			cooldowns[ip] = time.Now().Add(cooldownTime)
+			log.Printf("⏱ %s temporarily throttled", ip)
+			http.Error(w, "Too many requests 👍🏼", http.StatusTooManyRequests)
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }
 
-// GetIP extracts the client IP address from headers or remote addr
 func GetIP(r *http.Request) string {
 	ip := r.Header.Get("X-Forwarded-For")
 	if ip == "" {
@@ -48,7 +62,6 @@ func GetIP(r *http.Request) string {
 	return strings.TrimSpace(ip)
 }
 
-// LookupCountry tries to identify the country for an IP address using ip-api.com
 func LookupCountry(ip string) string {
 	client := http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get("http://ip-api.com/json/" + ip + "?fields=country")
@@ -57,11 +70,11 @@ func LookupCountry(ip string) string {
 	}
 	defer resp.Body.Close()
 
-	var data struct {
+	var res struct {
 		Country string `json:"country"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return "Unknown"
 	}
-	return data.Country
+	return res.Country
 }
