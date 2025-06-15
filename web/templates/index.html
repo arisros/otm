@@ -37,15 +37,20 @@
           <label for="read_once">Read once only</label>
         </div>
 
-        <div class="flex items-center justify-between text-sm">
-          <label for="expires_in">Expires in (seconds):</label>
+        <div class="text-sm space-y-1">
+          <label for="expires_in" class="block font-medium">
+            Expires in (seconds):
+          </label>
           <input
             type="number"
             name="expires_in"
             id="expires_in"
-            value="600"
-            class="w-24 p-1 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300 text-right"
+            value="0"
+            class="w-full sm:w-28 p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300 text-right"
           />
+          <p class="text-gray-500 text-xs">
+            Set to <strong>0</strong> for no expiration
+          </p>
         </div>
 
         <button
