@@ -1,5 +1,4 @@
-
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -7,10 +6,19 @@ PORT=8080
 ENV_FILE="config/.env"
 LOG_FILE="otm.log"
 BINARY="./otm-server"
+SOURCE_DIR="./cmd/otm"
 
 echo "🔄 Restarting server..."
 
-# Step 1: Kill any process currently using the port
+# Step 1: Build the binary
+echo "🛠️  Building Go binary..."
+if ! go build -o "$BINARY" "$SOURCE_DIR"; then
+    echo "❌ Build failed."
+    exit 1
+fi
+echo "✅ Build successful."
+
+# Step 2: Kill any process currently using the port
 PID=$(lsof -ti :$PORT || true)
 if [[ -n "$PID" ]]; then
     echo "⚠️  Killing process on port $PORT (PID: $PID)..."
@@ -19,7 +27,7 @@ else
     echo "✅ No process running on port $PORT."
 fi
 
-# Step 2: Load environment variables
+# Step 3: Load environment variables
 if [[ -f "$ENV_FILE" ]]; then
     echo "📦 Loading environment from $ENV_FILE..."
     # shellcheck disable=SC2046
@@ -29,15 +37,9 @@ else
     exit 1
 fi
 
-# Step 3: Check if binary exists
-if [[ ! -x "$BINARY" ]]; then
-    echo "❌ Binary not found or not executable: $BINARY"
-    exit 1
-fi
-
-# Step 4: Start server in background and redirect output to log
+# Step 4: Start the server in the background
 echo "🚀 Starting server..."
 nohup "$BINARY" > "$LOG_FILE" 2>&1 &
 
-echo "✅ Server started in background on port $PORT."
+echo "✅ Server started on port $PORT."
 echo "📄 Logs: $LOG_FILE"
