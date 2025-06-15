@@ -32,23 +32,30 @@ func handleCreateMessage(db *storage.DBHandle) http.HandlerFunc {
 
 		id := uuid.NewString()
 		now := time.Now()
-		expires := now.Add(time.Duration(req.ExpiresIn) * time.Second)
 
-		// Encrypt the message
+		readOnce := true
+
+		// if expires_in is 0, set to never expire (e.g., +100 years)
+		var expires time.Time
+		if req.ExpiresIn <= 0 {
+			expires = now.Add(100 * 365 * 24 * time.Hour) // ~100 years
+		} else {
+			expires = now.Add(time.Duration(req.ExpiresIn) * time.Second)
+		}
+
 		cipherText, nonceMsg, encryptedKey, nonceKey, err := encryption.EncryptMessageLayer([]byte(req.Message))
 		if err != nil {
 			http.Error(w, "Encryption failed", http.StatusInternalServerError)
 			return
 		}
 
-		// Save to database
 		msg := storage.Message{
 			ID:            id,
 			EncryptedText: cipherText,
 			NonceMsg:      nonceMsg,
 			EncryptedKey:  encryptedKey,
 			NonceKey:      nonceKey,
-			ReadOnce:      req.ReadOnce,
+			ReadOnce:      readOnce,
 			CreatedAt:     now,
 			ExpiresAt:     expires,
 		}
@@ -58,7 +65,6 @@ func handleCreateMessage(db *storage.DBHandle) http.HandlerFunc {
 			return
 		}
 
-		// Log the write
 		ip := middleware.GetIP(r)
 		country := middleware.LookupCountry(ip)
 		storage.LogWrite(db.Conn, storage.LogEntry{

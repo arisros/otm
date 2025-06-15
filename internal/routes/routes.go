@@ -5,27 +5,33 @@ import (
 	"path/filepath"
 
 	"github.com/go-chi/chi/v5"
-
 	"otm/internal/storage"
 )
 
-// RegisterRoutes injects DB and mounts routes
+var templates = map[string]string{
+	"home":    "index.html",
+	"message": "message.html",
+}
+
 func RegisterRoutes(r chi.Router, db *storage.DBHandle) {
-	// Serve homepage form
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join("web", "templates", "index.html"))
-	})
+	// static html
+	r.Get("/", serveTemplate("home"))
+	r.Get("/msg/{id}", serveTemplate("message"))
 
-	// Serve read message HTML
-	r.Get("/msg/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Accept") == "application/json" {
-			handleReadMessage(db).ServeHTTP(w, r)
-		} else {
-			http.ServeFile(w, r, filepath.Join("web", "templates", "message.html"))
-		}
-	})
-
-	// API endpoints
+	// rest api
 	r.Post("/api/messages", handleCreateMessage(db))
-	r.Get("/api/msg/{id}", handleReadMessage(db)) // Optional direct API read
+	r.Get("/api/msg/{id}", handleReadMessage(db))
+}
+
+func serveTemplate(name string) http.HandlerFunc {
+	filename, ok := templates[name]
+	if !ok {
+		return func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "Template not found", http.StatusNotFound)
+		}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join("web", "templates", filename))
+	}
 }

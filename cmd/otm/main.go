@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -19,11 +20,11 @@ func main() {
 	}
 
 	secret := os.Getenv("SECRET_KEY")
+	port := os.Getenv("PORT")
 	if len(secret) != 44 { // base64-encoded 32-byte key = 44 chars
 		log.Fatal("SECRET_KEY must be a base64-encoded 32-byte key")
 	}
 
-	// Initialize database
 	dbConn, err := storage.InitDB("otm.db")
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
@@ -34,13 +35,12 @@ func main() {
 
 	db := &storage.DBHandle{Conn: dbConn}
 
-	// Setup router
 	r := chi.NewRouter()
 	r.Use(middleware.RateLimitMiddleware)
 	routes.RegisterRoutes(r, db)
 
-	log.Println("OTM server running at http://localhost:3050")
-	if err := http.ListenAndServe(":3050", r); err != nil {
+	log.Println(fmt.Sprintf("OTM server running at http://localhost:%s", port))
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal(err)
 	}
 }
